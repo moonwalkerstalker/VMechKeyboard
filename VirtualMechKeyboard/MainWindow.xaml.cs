@@ -1,73 +1,153 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Media;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Path = System.IO.Path;
+using System.Windows.Threading;
 
 namespace VirtualMechKeyboard
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+    public enum CustomKey
+    {
+        down1,
+        up1
+    }
+
     public partial class MainWindow : Window
     {
+        private const int WH_KEYBOARD_LL = 13;
+        private const int WM_KEYDOWN = 0x0100;
+        private const int WM_KEYUP = 0x0101;
+        private IntPtr hookId = IntPtr.Zero;
+        private Dispatcher dispatcher;
+        
+        public class KeyInfo
+        {
+            public MediaPlayer Sound { get; set; }
+            public bool IsPressed { get; set; }
+        }
+        
+        private Dictionary<Key, KeyInfo> keyInfoMap = new Dictionary<Key, KeyInfo>();
+
         public MainWindow()
         {
             InitializeComponent();
+            dispatcher = Dispatcher.CurrentDispatcher;
+
+            foreach (Key key in Enum.GetValues(typeof(Key)))
+            {
+                keyInfoMap[key] = new KeyInfo
+                {
+                    Sound = CreateMediaPlayer("down1"),
+                    IsPressed = false
+                };
+            }
+
+            hookId = SetHook(KeyboardHookCallback);
+            SetupSystemTray();
         }
 
-        private void UIElement_OnKeyDown(object sender, KeyEventArgs e)
+        private IntPtr SetHook(LowLevelKeyboardProc proc)
         {
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string relativePath = @"assets\mech1\down1.wav"; // Update the path if needed
-            string fullPath = Path.Combine(baseDirectory, relativePath);
-            
-            var mediaPlayerBtnDown = new MediaPlayer();
-            mediaPlayerBtnDown.Open(new Uri(fullPath));
-            mediaPlayerBtnDown.Play();
+            using (var curProcess = System.Diagnostics.Process.GetCurrentProcess())
+            using (var curModule = curProcess.MainModule)
+            {
+                return NativeMethods.SetWindowsHookEx(WH_KEYBOARD_LL, proc, NativeMethods.GetModuleHandle(curModule.ModuleName), 0);
+            }
         }
 
-        private void UIElement_OnKeyUp(object sender, KeyEventArgs e)
+        private IntPtr KeyboardHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string relativePath = @"assets\mech1\up1.wav"; // Update the path if needed
-            string fullPath = Path.Combine(baseDirectory, relativePath);
-            
-            var mediaPlayerBtnDown = new MediaPlayer();
-            mediaPlayerBtnDown.Open(new Uri(fullPath));
-            mediaPlayerBtnDown.Play();
+            if (nCode >= 0 && (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_KEYUP))
+            {
+                int vkCode = Marshal.ReadInt32(lParam);
+                Key key = (Key)KeyInterop.KeyFromVirtualKey(vkCode); // Convert to WPF Key enum
+
+                if (keyInfoMap.ContainsKey(key))
+                {
+                    KeyInfo keyInfo = keyInfoMap[key];
+
+                    if (wParam == (IntPtr)WM_KEYDOWN && !keyInfo.IsPressed)
+                    {
+                        dispatcher.Invoke(() =>
+                        {
+                            keyInfo.Sound?.Stop();
+                            keyInfo.Sound = CreateMediaPlayer("down1");
+                            keyInfo.Sound?.Play();
+                            keyInfo.IsPressed = true;
+                        });
+                    }
+                    else if (wParam == (IntPtr)WM_KEYUP && keyInfo.IsPressed)
+                    {
+                        dispatcher.Invoke(() =>
+                        {
+                            keyInfo.Sound?.Stop();
+                            keyInfo.Sound = CreateMediaPlayer("up1");
+                            keyInfo.Sound?.Play();
+                            keyInfo.IsPressed = false;
+                        });
+                    }
+                }
+            }
+
+            return NativeMethods.CallNextHookEx(hookId, nCode, wParam, lParam);
         }
 
-        private void ButtonBase_OnClick(object sender, RoutedEventArgs e)
+
+        private MediaPlayer CreateMediaPlayer(string soundFileName)
         {
-            //EXECUTE AUDIO SOUND ON PRESS
-            //AND EXECUTE SECOND AUDIO SOUND ON RELEASE
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string relativePath = @"assets\nk-cream\a.wav"; // Update the path if needed
+            string relativePath = $"assets/mech1/{soundFileName}.wav"; // Update the path if needed
             string fullPath = Path.Combine(baseDirectory, relativePath);
 
             if (File.Exists(fullPath))
             {
-                var mediaPlayerBtn = new MediaPlayer();
-                mediaPlayerBtn.Open(new Uri(fullPath));
-                mediaPlayerBtn.Play();
+                var mediaPlayer = new MediaPlayer();
+                mediaPlayer.Open(new Uri(fullPath));
+                return mediaPlayer;
             }
             else
             {
-                MessageBox.Show("Audio file does not exist.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("Audio file does not exist.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
             }
         }
+
+        private void SetupSystemTray()
+        {
+            // Set up your system tray icon and event handling here
+        }
+
+     //  protected override void OnClosed(EventArgs e)
+     //  {
+     //      NativeMethods.UnhookWindowsHookEx(hookId);
+
+     //      foreach (var sound in keySounds.Values)
+     //      {
+     //          sound?.Stop();
+     //          sound?.Close();
+     //      }
+
+     //      base.OnClosed(e);
+     //  }
     }
+    public static class NativeMethods
+    {
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr GetModuleHandle(string lpModuleName);
+    }
+
+    public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 }

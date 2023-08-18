@@ -40,7 +40,7 @@ namespace VirtualMechKeyboard
             {
                 keyInfoMap[key] = new KeyInfo
                 {
-                    Sound = CreateMediaPlayer("down1"),
+                    Sound = null, // No sound initially
                     IsPressed = false
                 };
             }
@@ -73,7 +73,6 @@ namespace VirtualMechKeyboard
                     {
                         dispatcher.Invoke(() =>
                         {
-                            keyInfo.Sound?.Stop();
                             keyInfo.Sound = CreateMediaPlayer("down1");
                             keyInfo.Sound?.Play();
                             keyInfo.IsPressed = true;
@@ -91,6 +90,8 @@ namespace VirtualMechKeyboard
                     }
                 }
             }
+
+
 
             return NativeMethods.CallNextHookEx(hookId, nCode, wParam, lParam);
         }

@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <TextBlock HorizontalAlignment="Center">Vritual Mech Keyboard</TextBlock>
+    <Grid VerticalAlignment="Center" Margin="20">
+        <TextBlock>Vritual Mech Keyboard</TextBlock>
         <Button Height="20" Width="100px" >PRESS ANY KEY</Button>
     </Grid>
 </Window>

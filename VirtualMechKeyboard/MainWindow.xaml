@@ -1,0 +1,12 @@
+﻿<Window x:Class="VirtualMechKeyboard.MainWindow" KeyDown="UIElement_OnKeyDown" KeyUp="UIElement_OnKeyUp"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VirtualMechKeyboard"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Button Height="20" Width="100px" Click="ButtonBase_OnClick" > test button</Button>
+    </Grid>
+</Window>

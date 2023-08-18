@@ -9,12 +9,6 @@ using System.Windows.Threading;
 
 namespace VirtualMechKeyboard
 {
-    public enum CustomKey
-    {
-        down1,
-        up1
-    }
-
     public partial class MainWindow : Window
     {
         private const int WH_KEYBOARD_LL = 13;
@@ -27,7 +21,9 @@ namespace VirtualMechKeyboard
         {
             public MediaPlayer Sound { get; set; }
             public bool IsPressed { get; set; }
+            public bool IsKeyDown { get; set; } // New property to track key press state
         }
+
         
         private Dictionary<Key, KeyInfo> keyInfoMap = new Dictionary<Key, KeyInfo>();
 
@@ -69,36 +65,57 @@ namespace VirtualMechKeyboard
                 {
                     KeyInfo keyInfo = keyInfoMap[key];
 
-                    if (wParam == (IntPtr)WM_KEYDOWN && !keyInfo.IsPressed)
+                    if (wParam == (IntPtr)WM_KEYDOWN)
                     {
-                        dispatcher.Invoke(() =>
+                        if (!keyInfo.IsKeyDown) // Check if the key is not already down
                         {
-                            keyInfo.Sound = CreateMediaPlayer("down1");
-                            keyInfo.Sound?.Play();
-                            keyInfo.IsPressed = true;
-                        });
+                            dispatcher.Invoke(() =>
+                            {
+                                keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: true);
+                                keyInfo.Sound?.Play();
+                                keyInfo.IsPressed = true;
+                                keyInfo.IsKeyDown = true;
+                            });
+                        }
                     }
-                    else if (wParam == (IntPtr)WM_KEYUP && keyInfo.IsPressed)
+                    else if (wParam == (IntPtr)WM_KEYUP)
                     {
                         dispatcher.Invoke(() =>
                         {
                             keyInfo.Sound?.Stop();
-                            keyInfo.Sound = CreateMediaPlayer("up1");
+                            keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: false);
                             keyInfo.Sound?.Play();
                             keyInfo.IsPressed = false;
+                            keyInfo.IsKeyDown = false; // Reset the key press state
                         });
                     }
                 }
             }
 
-
-
             return NativeMethods.CallNextHookEx(hookId, nCode, wParam, lParam);
         }
 
+        //TODO KEYBOARD AS STREAM OVERLAY
+        //TODO SHOW KEYBOARD ON SCREEN, ANIMATE KEYS PRESSED AND RELEASED
 
-        private MediaPlayer CreateMediaPlayer(string soundFileName)
+        private MediaPlayer CreateMediaPlayer(Key key, bool isKeyDown)
         {
+            string soundFileName;
+
+            if (key == Key.Enter) soundFileName = isKeyDown ? "enter_down" : "enter_up";
+            else if (key == Key.Space) soundFileName = isKeyDown ? "space_down" : "space_up";
+            // else if (key == Key.Escape) soundFileName = isKeyDown ? "esc_down" : "esc_up"; //Todo add ESC sound up and down
+            else if (key == Key.LeftShift || key == Key.RightShift) soundFileName = isKeyDown ? "shift_down" : "shift_up";
+            else if (key == Key.LeftCtrl || key == Key.RightCtrl) soundFileName = isKeyDown ? "ctrl_down" : "ctrl_up";
+            else if (key == Key.Back) soundFileName = isKeyDown ? "backspace_down" : "backspace_up";
+            else
+            {
+                // For other keys, generate a random sound file name
+                Random random = new Random();
+                int randomIndex = random.Next(1, 7); // Assuming you have 6 sounds
+                soundFileName = isKeyDown ? $"random_{randomIndex}_down" : $"random_{randomIndex}_up";
+            }
+
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string relativePath = $"assets/mech1/{soundFileName}.wav"; // Update the path if needed
             string fullPath = Path.Combine(baseDirectory, relativePath);
@@ -115,6 +132,7 @@ namespace VirtualMechKeyboard
                 return null;
             }
         }
+
 
         private void SetupSystemTray()
         {

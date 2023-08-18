@@ -9,13 +9,8 @@
 
     <ItemGroup>
       <None Remove="assets\mech1\down1.wav" />
-      <Content Include="assets\mech1\down1.wav">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
       <None Remove="assets\mech1\up1.wav" />
-      <Content Include="assets\mech1\up1.wav">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <None Remove="assets\mech1\tab.wav" />
     </ItemGroup>
 
     <ItemGroup>
@@ -25,6 +20,108 @@
 
     <ItemGroup>
       <Compile Remove="GlobalHotKey.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="assets\mech1\ctrl.wav" />
+      <None Remove="assets\mech1\enter.wav" />
+      <None Remove="assets\mech1\space.wav" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="assets\mech1\backspace.wav" />
+      <None Remove="assets\mech1\shift.wav" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="assets\mech1\backspace_down.wav" />
+      <Content Include="assets\mech1\backspace_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\backspace_up.wav" />
+      <Content Include="assets\mech1\backspace_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\ctrl_down.wav" />
+      <Content Include="assets\mech1\ctrl_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\ctrl_up.wav" />
+      <Content Include="assets\mech1\ctrl_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\enter_down.wav" />
+      <Content Include="assets\mech1\enter_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\enter_up.wav" />
+      <Content Include="assets\mech1\enter_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_1_down.wav" />
+      <Content Include="assets\mech1\random_1_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_1_up.wav" />
+      <Content Include="assets\mech1\random_1_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_2_down.wav" />
+      <Content Include="assets\mech1\random_2_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_2_up.wav" />
+      <Content Include="assets\mech1\random_2_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_3_down.wav" />
+      <Content Include="assets\mech1\random_3_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_3_up.wav" />
+      <Content Include="assets\mech1\random_3_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_4_down.wav" />
+      <Content Include="assets\mech1\random_4_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_4_up.wav" />
+      <Content Include="assets\mech1\random_4_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_5_down.wav" />
+      <Content Include="assets\mech1\random_5_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_5_up.wav" />
+      <Content Include="assets\mech1\random_5_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_6_down.wav" />
+      <Content Include="assets\mech1\random_6_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\random_6_up.wav" />
+      <Content Include="assets\mech1\random_6_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\shift_down.wav" />
+      <Content Include="assets\mech1\shift_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\shift_up.wav" />
+      <Content Include="assets\mech1\shift_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\space_down.wav" />
+      <Content Include="assets\mech1\space_down.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="assets\mech1\space_up.wav" />
+      <Content Include="assets\mech1\space_up.wav">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

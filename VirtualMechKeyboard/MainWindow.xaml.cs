@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 namespace VirtualMechKeyboard
@@ -17,6 +20,8 @@ namespace VirtualMechKeyboard
         private IntPtr hookId = IntPtr.Zero;
         private Dispatcher dispatcher;
         
+        private Task soundPlaybackTask;
+
         public class KeyInfo
         {
             public MediaPlayer Sound { get; set; }
@@ -24,6 +29,12 @@ namespace VirtualMechKeyboard
             public bool IsKeyDown { get; set; } // New property to track key press state
         }
 
+        // INotifyPropertyChanged implementation
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
         
         private Dictionary<Key, KeyInfo> keyInfoMap = new Dictionary<Key, KeyInfo>();
 
@@ -31,7 +42,8 @@ namespace VirtualMechKeyboard
         {
             InitializeComponent();
             dispatcher = Dispatcher.CurrentDispatcher;
-
+            DataContext = this;
+            
             foreach (Key key in Enum.GetValues(typeof(Key)))
             {
                 keyInfoMap[key] = new KeyInfo
@@ -42,8 +54,8 @@ namespace VirtualMechKeyboard
             }
 
             hookId = SetHook(KeyboardHookCallback);
-            SetupSystemTray();
         }
+
 
         private IntPtr SetHook(LowLevelKeyboardProc proc)
         {
@@ -65,49 +77,57 @@ namespace VirtualMechKeyboard
                 {
                     KeyInfo keyInfo = keyInfoMap[key];
 
-                    if (wParam == (IntPtr)WM_KEYDOWN)
+                    Task.Run(() =>
                     {
-                        if (!keyInfo.IsKeyDown) // Check if the key is not already down
+                        if (wParam == (IntPtr)WM_KEYDOWN)
+                        {
+                            if (!keyInfo.IsKeyDown) // Check if the key is not already down
+                            {
+                                dispatcher.Invoke(() =>
+                                {
+                                    keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: true);
+                                    keyInfo.Sound?.Play();
+                                    keyInfo.IsPressed = true;
+                                    keyInfo.IsKeyDown = true;
+                                    
+                                    UpdateKeycapImage("keycap_down.png");
+                                });
+                            }
+                        }
+                        else if (wParam == (IntPtr)WM_KEYUP) //UP
                         {
                             dispatcher.Invoke(() =>
                             {
-                                keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: true);
+                                keyInfo.Sound?.Stop();
+                                keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: false);
                                 keyInfo.Sound?.Play();
-                                keyInfo.IsPressed = true;
-                                keyInfo.IsKeyDown = true;
+                                keyInfo.IsPressed = false;
+                                keyInfo.IsKeyDown = false; // Reset the key press state
+                                
+                                UpdateKeycapImage("keycap_up.png");
+
                             });
                         }
-                    }
-                    else if (wParam == (IntPtr)WM_KEYUP)
-                    {
-                        dispatcher.Invoke(() =>
-                        {
-                            keyInfo.Sound?.Stop();
-                            keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: false);
-                            keyInfo.Sound?.Play();
-                            keyInfo.IsPressed = false;
-                            keyInfo.IsKeyDown = false; // Reset the key press state
-                        });
-                    }
+                    });
                 }
             }
 
             return NativeMethods.CallNextHookEx(hookId, nCode, wParam, lParam);
         }
-
-        //TODO KEYBOARD AS STREAM OVERLAY
-        //TODO SHOW KEYBOARD ON SCREEN, ANIMATE KEYS PRESSED AND RELEASED
-
+        
         private MediaPlayer CreateMediaPlayer(Key key, bool isKeyDown)
         {
             string soundFileName;
-
+            
             if (key == Key.Enter) soundFileName = isKeyDown ? "enter_down" : "enter_up";
             else if (key == Key.Space) soundFileName = isKeyDown ? "space_down" : "space_up";
-            // else if (key == Key.Escape) soundFileName = isKeyDown ? "esc_down" : "esc_up"; //Todo add ESC sound up and down
+            else if (key == Key.Escape) soundFileName = isKeyDown ? "esc_down" : "esc_up"; //Todo add ESC sound up and down
             else if (key == Key.LeftShift || key == Key.RightShift) soundFileName = isKeyDown ? "shift_down" : "shift_up";
             else if (key == Key.LeftCtrl || key == Key.RightCtrl) soundFileName = isKeyDown ? "ctrl_down" : "ctrl_up";
             else if (key == Key.Back) soundFileName = isKeyDown ? "backspace_down" : "backspace_up";
+            else if (key == Key.Escape) soundFileName = isKeyDown ? "esc_down" : "esc_up";
+            else if (key == Key.LeftAlt || key == Key.RightAlt) soundFileName = isKeyDown ? "alt_down" : "alt_up";
+            else if (key == Key.LeftShift || key == Key.RightShift) soundFileName = isKeyDown ? "shift_down" : "shift_up";
             else
             {
                 // For other keys, generate a random sound file name
@@ -128,17 +148,38 @@ namespace VirtualMechKeyboard
             }
             else
             {
-                System.Windows.MessageBox.Show("Audio file does not exist.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return null;
+                Random random = new Random();
+                int randomIndex = random.Next(1, 7); // Assuming you have 6 sounds
+                soundFileName = isKeyDown ? $"random_{randomIndex}_down" : $"random_{randomIndex}_up";
+                
+                baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                relativePath = $"assets/mech1/{soundFileName}.wav"; // Update the path if needed
+
+                fullPath = Path.Combine(baseDirectory, relativePath);
+
+                var mediaPlayer = new MediaPlayer();
+                mediaPlayer.Open(new Uri(fullPath));
+                return mediaPlayer;
+            }
+        }
+        
+        private void UpdateKeycapImage(string imageName)
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string imagePath = Path.Combine(baseDirectory, "Assets", imageName);
+
+            if (File.Exists(imagePath))
+            {
+                BitmapImage bitmapImage = new BitmapImage(new Uri(imagePath));
+                KeycapImage.Source = bitmapImage;
+            }
+            else
+            {
+                MessageBox.Show("Image file does not exist.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-
-        private void SetupSystemTray()
-        {
-            // Set up your system tray icon and event handling here
-        }
-
+        
      //  protected override void OnClosed(EventArgs e)
      //  {
      //      NativeMethods.UnhookWindowsHookEx(hookId);
@@ -151,9 +192,10 @@ namespace VirtualMechKeyboard
 
      //      base.OnClosed(e);
      //  }
+     
     }
     public static class NativeMethods
-    {
+    { 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
 

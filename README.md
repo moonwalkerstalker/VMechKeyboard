@@ -33,6 +33,7 @@ To get started with VMechKeyboard, follow these steps:
 ## Contributing
 
 Contributions are welcome and encouraged! If you'd like to contribute to VMechKeyboard, feel free to fork this repository, make your changes, and submit a pull request.
+check our contributing guidelines here > CONTRIBUTING.md
 
 ## Acknowledgments
 

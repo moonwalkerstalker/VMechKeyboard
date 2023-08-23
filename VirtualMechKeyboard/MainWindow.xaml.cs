@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -19,6 +23,8 @@ namespace VirtualMechKeyboard
         private const int WM_KEYUP = 0x0101;
         private IntPtr hookId = IntPtr.Zero;
         private Dispatcher dispatcher;
+        private string selectedSoundPack;
+
         
         private Task soundPlaybackTask;
 
@@ -36,8 +42,8 @@ namespace VirtualMechKeyboard
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
         
-        private Dictionary<Key, KeyInfo> keyInfoMap = new Dictionary<Key, KeyInfo>();
-
+        private ConcurrentDictionary<Key, KeyInfo> keyInfoMap = new ConcurrentDictionary<Key, KeyInfo>();
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -52,10 +58,41 @@ namespace VirtualMechKeyboard
                     IsPressed = false
                 };
             }
+            LoadSoundPackItems();
+
 
             hookId = SetHook(KeyboardHookCallback);
         }
 
+        private void PackComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox comboBox = sender as ComboBox;
+            ComboBoxItem selectedComboBoxItem = comboBox.SelectedItem as ComboBoxItem;
+
+            if (selectedComboBoxItem != null)
+            {
+                selectedSoundPack = selectedComboBoxItem.Value;
+            }
+        }
+        public class ComboBoxItem
+        {
+            public string DisplayText { get; set; }
+            public string Value { get; set; }
+        }
+
+        private void LoadSoundPackItems()
+        {
+            ObservableCollection<ComboBoxItem> comboBoxItems = new ObservableCollection<ComboBoxItem>
+            {
+                new ComboBoxItem { DisplayText = "Pack 1", Value = "mech1" },
+                new ComboBoxItem { DisplayText = "RAZOR CLICKY", Value = "mech2" }
+            };
+
+            PackComboBox.ItemsSource = comboBoxItems; // Assign the collection as the ItemsSource
+
+            ComboBoxItem selectedItem = comboBoxItems.FirstOrDefault(item => item.Value == "mech1");
+            PackComboBox.SelectedItem = selectedItem;
+        }
 
         private IntPtr SetHook(LowLevelKeyboardProc proc)
         {
@@ -79,34 +116,49 @@ namespace VirtualMechKeyboard
 
                     Task.Run(() =>
                     {
-                        if (wParam == (IntPtr)WM_KEYDOWN)
+                        try
                         {
-                            if (!keyInfo.IsKeyDown) // Check if the key is not already down
+                            if (wParam == (IntPtr)WM_KEYDOWN)
+                            {
+                                if (!keyInfo.IsKeyDown) // Check if the key is not already down
+                                {
+                                    dispatcher.Invoke(() =>
+                                    {
+                                        keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: true);
+                                        keyInfo.Sound?.Play();
+                                        keyInfo.IsPressed = true;
+                                        keyInfo.IsKeyDown = true;
+                                    
+                                        UpdateKeycapImage("keycap_down.png");
+                                    });
+                                }
+                            }
+                            else if (wParam == (IntPtr)WM_KEYUP) //UP
                             {
                                 dispatcher.Invoke(() =>
                                 {
-                                    keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: true);
+                                    keyInfo.Sound?.Stop();
+                                    keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: false);
                                     keyInfo.Sound?.Play();
-                                    keyInfo.IsPressed = true;
-                                    keyInfo.IsKeyDown = true;
-                                    
-                                    UpdateKeycapImage("keycap_down.png");
+                                    keyInfo.IsPressed = false;
+                                    keyInfo.IsKeyDown = false; // Reset the key press state
+                                
+                                    UpdateKeycapImage("keycap_up.png");
+                                    // Dispose of the MediaPlayer object
+                                    keyInfo.Sound.MediaEnded += (sender, args) =>
+                                    {
+                                        keyInfo.Sound.Close();
+                                        keyInfo.Sound = null;
+                                    };
+
                                 });
                             }
-                        }
-                        else if (wParam == (IntPtr)WM_KEYUP) //UP
-                        {
-                            dispatcher.Invoke(() =>
-                            {
-                                keyInfo.Sound?.Stop();
-                                keyInfo.Sound = CreateMediaPlayer(key, isKeyDown: false);
-                                keyInfo.Sound?.Play();
-                                keyInfo.IsPressed = false;
-                                keyInfo.IsKeyDown = false; // Reset the key press state
-                                
-                                UpdateKeycapImage("keycap_up.png");
 
-                            });
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                            throw;
                         }
                     });
                 }
@@ -137,14 +189,23 @@ namespace VirtualMechKeyboard
             }
 
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string relativePath = $"assets/mech1/{soundFileName}.wav"; // Update the path if needed
+            string relativePath = $"assets/{selectedSoundPack}/{soundFileName}.wav"; // Update the path if needed
             string fullPath = Path.Combine(baseDirectory, relativePath);
 
             if (File.Exists(fullPath))
             {
-                var mediaPlayer = new MediaPlayer();
-                mediaPlayer.Open(new Uri(fullPath));
-                return mediaPlayer;
+                try
+                {
+                    var mediaPlayer = new MediaPlayer();
+                    mediaPlayer.Open(new Uri(fullPath));
+                    return mediaPlayer;
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Media player Exception" + e);
+                    throw;
+                }
             }
             else
             {
@@ -152,14 +213,24 @@ namespace VirtualMechKeyboard
                 int randomIndex = random.Next(1, 7); // Assuming you have 6 sounds
                 soundFileName = isKeyDown ? $"random_{randomIndex}_down" : $"random_{randomIndex}_up";
                 
-                baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                relativePath = $"assets/mech1/{soundFileName}.wav"; // Update the path if needed
+                string baseDirectory2 = AppDomain.CurrentDomain.BaseDirectory;
+                string relativePath2 = $"assets/mech1/{soundFileName}.wav"; // Update the path if needed
 
-                fullPath = Path.Combine(baseDirectory, relativePath);
+                string fullPath2 = Path.Combine(baseDirectory2, relativePath2);
 
-                var mediaPlayer = new MediaPlayer();
-                mediaPlayer.Open(new Uri(fullPath));
-                return mediaPlayer;
+
+                try
+                {
+                    var mediaPlayer = new MediaPlayer();
+                    mediaPlayer.Open(new Uri(fullPath));
+                    return mediaPlayer;
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             }
         }
         

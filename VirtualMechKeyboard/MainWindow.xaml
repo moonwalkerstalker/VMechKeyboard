@@ -1,15 +1,27 @@
 ﻿<Window x:Class="VirtualMechKeyboard.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Virtual Mech Keyboard" Height="200" Width="200">
+        Title="Virtual Mech Keyboard" Height="400" Width="400">
     
     <Grid VerticalAlignment="Center" Margin="20">
-        <TextBlock>Virtual Mech Keyboard</TextBlock>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <!-- Display an SVG image using the SvgImageConverter -->
-        <Image x:Name="KeycapImage" Source="Assets/keycap_up.png" Width="100" Height="100"/>
+        <TextBlock Grid.Row="0" HorizontalAlignment="Center">Virtual Mech Keyboard</TextBlock>
+
+        <ComboBox x:Name="PackComboBox" DisplayMemberPath="DisplayText" Grid.Row="1" Width="200" HorizontalAlignment="Center" SelectionChanged="PackComboBox_SelectionChanged"/>
+
+        <Image Grid.Row="2" x:Name="KeycapImage" Source="Assets/keycap_up.png" Width="100" Height="100" HorizontalAlignment="Center"/>
         
-        <Button Height="20" Width="100" Content="PRESS ANY KEY" />
-        
+        <Slider Grid.Row="3" Width="150" Minimum="0" Maximum="100" Value="50" HorizontalAlignment="Center"/>
+
+        <Button Grid.Row="4" Height="20" Width="100" Content="PRESS ANY KEY" HorizontalAlignment="Center"/>
     </Grid>
+
+
 </Window>

@@ -1,27 +1,38 @@
 ﻿<Window x:Class="VirtualMechKeyboard.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Virtual Mech Keyboard" Height="400" Width="400">
+        Title="Keyboard Simulator App" Height="450" Width="800">
+    <!-- <Grid> -->
+    <!--     <Grid.RowDefinitions> -->
+    <!--         <RowDefinition Height="Auto"/> -->
+    <!--         <RowDefinition Height="*"/> -->
+    <!--     </Grid.RowDefinitions> -->
+    <!-- -->
+    <!--     <Grid Grid.Row="0"> -->
+    <!--         <Grid.ColumnDefinitions> -->
+    <!--             <ColumnDefinition Width="Auto"/> -->
+    <!--             <ColumnDefinition Width="*"/> -->
+    <!--         </Grid.ColumnDefinitions> -->
+    <!-- -->
+    <!--         <TextBlock Text="Sound Pack:" VerticalAlignment="Center"/> -->
+    <!--         <ComboBox x:Name="soundPackComboBox" Grid.Column="1" Margin="10" SelectionChanged="SoundPackComboBox_SelectionChanged"> -->
+    <!--             ~1~ Sound pack items will be populated dynamically @1@ -->
+    <!--         </ComboBox> -->
+    <!--     </Grid> -->
+    <!-- -->
+    <!--     <StatusBar Grid.Row="1"> -->
+    <!--         <StatusBarItem> -->
+    <!--             <TextBlock x:Name="statusTextBlock" Text="Selected Sound Pack: " VerticalAlignment="Center"/> -->
+    <!--         </StatusBarItem> -->
+    <!--     </StatusBar> -->
+    <!-- </Grid> -->
     
-    <Grid VerticalAlignment="Center" Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
-        <TextBlock Grid.Row="0" HorizontalAlignment="Center">Virtual Mech Keyboard</TextBlock>
-
-        <ComboBox x:Name="PackComboBox" DisplayMemberPath="DisplayText" Grid.Row="1" Width="200" HorizontalAlignment="Center" SelectionChanged="PackComboBox_SelectionChanged"/>
-
-        <Image Grid.Row="2" x:Name="KeycapImage" Source="Assets/keycap_up.png" Width="100" Height="100" HorizontalAlignment="Center"/>
-        
-        <Slider Grid.Row="3" Width="150" Minimum="0" Maximum="100" Value="50" HorizontalAlignment="Center"/>
-
-        <Button Grid.Row="4" Height="20" Width="100" Content="PRESS ANY KEY" HorizontalAlignment="Center"/>
-    </Grid>
-
+    <StackPanel>
+        <Label Content="Select Sound Pack:"/>
+        <ComboBox x:Name="SoundPackComboBox" SelectionChanged="SoundPackComboBox_SelectionChanged">
+            <ComboBoxItem Content="Sound Pack 1" Tag="assets/mech1" IsSelected="True"/>
+            <ComboBoxItem Content="Sound Pack 2" Tag="assets/mech2"/>
+        </ComboBox>
+    </StackPanel>
 
 </Window>

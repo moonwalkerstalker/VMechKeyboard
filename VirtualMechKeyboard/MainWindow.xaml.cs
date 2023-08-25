@@ -6,7 +6,6 @@ using System.Media;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
 using System.Windows.Input;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using KeyboardHookLite;
@@ -17,7 +16,6 @@ namespace VirtualMechKeyboard
     {
         private string selectedSoundPackFolder = "assets/mech1"; // Default sound pack folder
         private bool isMinimizedToTray = false;
-        private NotifyIcon notifyIcon;
         private BackgroundWorker backgroundWorker;
         private Thread backgroundThread;
 
@@ -55,31 +53,30 @@ namespace VirtualMechKeyboard
             }
         }
         
-        private void OnKeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.IsRepeat)
-                return;
-
-            PlaySound(e.Key, "_up.wav");
-        }
-
         private void PlaySound(Key key, string action)
         {
-            // Check if the key is a special key
-            if (key == Key.Space || key == Key.Enter || key == Key.LeftShift || key == Key.RightShift ||
-                key == Key.LeftCtrl || key == Key.RightCtrl || key == Key.LeftAlt || key == Key.RightAlt ||
-                key == Key.Escape || key == Key.Back)
-            {
-                string soundPath = Path.Combine(selectedSoundPackFolder, key.ToString().ToLower() + action);
-                PlaySoundFile(soundPath);
-            }
+            string keyName;
+            
+            bool isKeyDown = action == "_down";
+
+            if (key == Key.Enter) keyName = "enter";
+            else if (key == Key.Space) keyName = "space";
+            else if (key==Key.Escape) keyName = "escape";
+            else if (key is Key.LeftShift or Key.RightShift) keyName = "shift";
+            else if (key is Key.LeftCtrl or Key.RightCtrl) keyName = "ctrl";
+            else if (key==Key.Back) keyName = "backspace";
+            else if (key==Key.Escape) keyName = "escape";
+            else if (key is Key.LeftAlt or Key.RightAlt) keyName = "alt";
+            else if (key is Key.LeftShift or Key.RightShift) keyName = "shift";
             else
             {
                 int randomSoundIndex = random.Next(1, 7);
-                string soundPath = Path.Combine(selectedSoundPackFolder, "random_" + randomSoundIndex + action);
-                PlaySoundFile(soundPath);
+                keyName = "random_" + randomSoundIndex;
             }
-
+            
+            string soundPath = Path.Combine(selectedSoundPackFolder, keyName + action);
+            PlaySoundFile(soundPath);
+            
             lastPlayTimes[key] = DateTime.Now;
         }
 
@@ -100,20 +97,6 @@ namespace VirtualMechKeyboard
         {
             ComboBoxItem selectedItem = (ComboBoxItem)SoundPackComboBox.SelectedItem;
             selectedSoundPackFolder = selectedItem.Tag.ToString();
-        }
-        
-        private void MainWindow_StateChanged(object sender, EventArgs e)
-        {
-            if (WindowState == WindowState.Minimized)
-            {
-                Hide();
-                notifyIcon.Visible = true;
-                isMinimizedToTray = true;
-            }
-            else
-            {
-                isMinimizedToTray = false;
-            }
         }
         
         private void BackgroundWorker_DoWork(object sender, DoWorkEventArgs e)

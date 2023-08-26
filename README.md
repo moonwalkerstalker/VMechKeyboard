@@ -1,6 +1,4 @@
-# WORK IN PROGRESS... 
-The first with basic functionality with key up and key down sounds is working fine, but it closes after a couple of key strokes
-download at - https://github.com/moonwalkerstalker/VMechKeyboard/releases/tag/beta
+Download at releases -> https://github.com/moonwalkerstalker/VMechKeyboard/releases/tag/beta
 
 # VMechKeyboard - Mechanical Keyboard Simulator
 

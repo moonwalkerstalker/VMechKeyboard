@@ -12,7 +12,7 @@ VMechKeyboard is a Windows WPF application built using C# and .NET 7 that simula
 
 ## Why VMechKeyboard?
 
-While there are other keyboard simulators available, VMechKeyboard stands out by offering key down and key up sound support, ensuring a more realistic and immersive mechanical keyboard experience. This is perfect for enthusiasts who appreciate the tactile feedback that mechanical keyboards provide.
+While there are other keyboard simulators available, VMechKeyboard stands out by offering **key down and key up sound support**, ensuring a more realistic and immersive mechanical keyboard experience. This is perfect for enthusiasts who appreciate the tactile feedback that mechanical keyboards provide.
 
 ## Getting Started
 
